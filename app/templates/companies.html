@@ -28,6 +28,10 @@
     <button type="submit" class="secondary">CSVインポート</button>
   </form>
   <a class="btn secondary" href="/companies/export{% if status %}?status={{ status }}{% endif %}">CSVエクスポート</a>
+  <form method="post" action="/companies/houjin">
+    <input type="text" name="name" placeholder="法人名で法人番号APIを検索" required>
+    <button type="submit" class="secondary">法人番号APIで収集</button>
+  </form>
 </div>
 
 <table>

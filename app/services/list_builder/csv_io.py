@@ -100,6 +100,38 @@ def import_companies_csv(db: Session, content: bytes | str, source: str = "csv")
     return result
 
 
+def import_houjin_companies(db: Session, companies, source: str = "houjin_api") -> ImportResult:
+    """法人番号APIの取得結果(HoujinCompany列)を正規化・重複排除して取り込む。
+
+    法人番号APIはドメインを含まないため、重複判定は社名キーで行う。
+    """
+    result = ImportResult()
+    existing_name_keys = {company_name_key(n) for n in db.scalars(select(Company.name))}
+
+    for hc in companies:
+        name = normalize_company_name(hc.name)
+        if not name:
+            continue
+        name_key = company_name_key(name)
+        if name_key in existing_name_keys:
+            result.skipped_duplicates += 1
+            continue
+        existing_name_keys.add(name_key)
+        db.add(
+            Company(
+                name=name,
+                corporate_number=(hc.corporate_number or "").strip() or None,
+                address=(hc.address or "").strip() or None,
+                source=source,
+                status=CompanyStatus.NEW,
+            )
+        )
+        result.imported += 1
+
+    db.commit()
+    return result
+
+
 def export_companies_csv(db: Session, status: CompanyStatus | None = None) -> str:
     """companies をCSV文字列にエクスポートする。"""
     query = select(Company).order_by(Company.id)

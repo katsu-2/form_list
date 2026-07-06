@@ -31,6 +31,21 @@
   <a class="btn secondary" href="/campaigns/{{ campaign.id }}">表示を更新</a>
 </div>
 
+<div class="toolbar">
+  {% if campaign.scheduled_at %}
+  <span class="muted">自動実行の予約: {{ campaign.scheduled_at.strftime("%Y-%m-%d %H:%M") }} (UTC)</span>
+  <form method="post" action="/campaigns/{{ campaign.id }}/unschedule" style="display:inline">
+    <button type="submit" class="danger">予約を解除</button>
+  </form>
+  {% else %}
+  <form method="post" action="/campaigns/{{ campaign.id }}/schedule">
+    <label>自動実行を予約(UTC)<input type="datetime-local" name="run_at" required></label>
+    <button type="submit" class="secondary">予約</button>
+  </form>
+  {% endif %}
+</div>
+<p class="muted">予約実行時は「承認済み」タスクのみが送信されます。事前に下書きを承認しておいてください。</p>
+
 <h3>送信タスク</h3>
 <table>
   <thead><tr><th>ID</th><th>企業</th><th>フォーム</th><th>本文(下書き)</th><th>状態</th><th>詳細</th><th>操作</th></tr></thead>

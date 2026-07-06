@@ -7,7 +7,12 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import Company, CompanyStatus, NgEntry
 from app.services.form_finder.discover import discover_form_for_company
-from app.services.list_builder.csv_io import export_companies_csv, import_companies_csv
+from app.services.list_builder.csv_io import (
+    export_companies_csv,
+    import_companies_csv,
+    import_houjin_companies,
+)
+from app.services.list_builder.houjin_api import fetch_by_name
 from app.services.list_builder.normalize import extract_domain
 
 router = APIRouter()
@@ -59,6 +64,19 @@ async def import_csv(file: UploadFile, db: Session = Depends(get_db)):
     )
     if result.errors:
         flash += f" / エラー {len(result.errors)}件: " + " | ".join(result.errors[:3])
+    return RedirectResponse(url=f"/?flash={flash}", status_code=303)
+
+
+@router.post("/companies/houjin")
+def import_houjin(name: str = Form(...), db: Session = Depends(get_db)):
+    result = fetch_by_name(name)
+    if result.error:
+        return RedirectResponse(url=f"/?flash=法人番号API: {result.error}", status_code=303)
+    imported = import_houjin_companies(db, result.companies)
+    flash = (
+        f"法人番号APIから {imported.imported}件を取込"
+        f"(検索ヒット {len(result.companies)}件 / 重複スキップ {imported.skipped_duplicates}件)"
+    )
     return RedirectResponse(url=f"/?flash={flash}", status_code=303)
 
 

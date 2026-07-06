@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -14,6 +16,7 @@ from app.models import (
     SenderProfile,
 )
 from app.services.sender.runner import generate_drafts, run_campaign
+from app.services.sender.scheduler import schedule_campaign, unschedule_campaign
 from app.services.sender.values import missing_profile_fields
 
 router = APIRouter(prefix="/campaigns")
@@ -143,3 +146,49 @@ def run(
     background_tasks.add_task(run_campaign, campaign_id, dry_run=is_dry)
     flash = "dry-run(入力のみ・送信なし)を開始しました" if is_dry else "送信を開始しました"
     return RedirectResponse(url=f"/campaigns/{campaign_id}?flash={flash}", status_code=303)
+
+
+@router.post("/{campaign_id}/schedule")
+def schedule(
+    campaign_id: int,
+    run_at: str = Form(...),  # datetime-local の値(ローカル時刻)
+    db: Session = Depends(get_db),
+):
+    campaign = db.get(Campaign, campaign_id)
+    if campaign is None:
+        return RedirectResponse(url="/campaigns/?flash=キャンペーンが見つかりません", status_code=303)
+    try:
+        # datetime-local はタイムゾーンなし。ここではUTCとして解釈する
+        run_dt = datetime.fromisoformat(run_at).replace(tzinfo=timezone.utc)
+    except ValueError:
+        return RedirectResponse(
+            url=f"/campaigns/{campaign_id}?flash=日時の形式が不正です", status_code=303
+        )
+    if run_dt <= datetime.now(timezone.utc):
+        return RedirectResponse(
+            url=f"/campaigns/{campaign_id}?flash=未来の日時を指定してください", status_code=303
+        )
+
+    campaign.scheduled_at = run_dt.replace(tzinfo=None)
+    campaign.status = "scheduled"
+    db.commit()
+    schedule_campaign(campaign_id, run_dt)
+    return RedirectResponse(
+        url=f"/campaigns/{campaign_id}?flash={run_at} (UTC) に自動実行を予約しました",
+        status_code=303,
+    )
+
+
+@router.post("/{campaign_id}/unschedule")
+def unschedule(campaign_id: int, db: Session = Depends(get_db)):
+    campaign = db.get(Campaign, campaign_id)
+    if campaign is None:
+        return RedirectResponse(url="/campaigns/?flash=キャンペーンが見つかりません", status_code=303)
+    campaign.scheduled_at = None
+    if campaign.status == "scheduled":
+        campaign.status = "draft"
+    db.commit()
+    unschedule_campaign(campaign_id)
+    return RedirectResponse(
+        url=f"/campaigns/{campaign_id}?flash=予約を解除しました", status_code=303
+    )

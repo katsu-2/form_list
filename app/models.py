@@ -105,6 +105,7 @@ class Campaign(Base):
     interval_seconds: Mapped[int] = mapped_column(Integer, default=30)
     daily_limit: Mapped[int] = mapped_column(Integer, default=100)
     status: Mapped[str] = mapped_column(String(32), default="draft")
+    scheduled_at: Mapped[datetime | None] = mapped_column(DateTime)  # 自動実行の予約時刻(UTC)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     template: Mapped[MessageTemplate] = relationship()
