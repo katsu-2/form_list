@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}ダッシュボード | フォーム営業ツール{% endblock %}
+{% block content %}
+<h2>ダッシュボード</h2>
+
+<div class="stats" style="gap:2rem; font-size:1rem;">
+  <div><strong style="font-size:1.6rem;">{{ total_logs }}</strong><br><span class="muted">総送信試行</span></div>
+  <div><strong style="font-size:1.6rem;">{{ success }}</strong><br><span class="muted">送信成功</span></div>
+  <div><strong style="font-size:1.6rem;">{{ "%.1f"|format(success_rate) }}%</strong><br><span class="muted">成功率</span></div>
+</div>
+
+<h3>送信結果の内訳</h3>
+{% if result_counts %}
+<table style="max-width:420px;">
+  <thead><tr><th>結果</th><th>件数</th></tr></thead>
+  <tbody>
+    {% for label, count in result_counts.items() %}
+    <tr><td>{{ label }}</td><td>{{ count }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="muted">まだ送信ログがありません。</p>{% endif %}
+
+<h3>失敗・スキップ・手動対応の理由</h3>
+{% if reasons %}
+<table style="max-width:420px;">
+  <thead><tr><th>理由</th><th>件数</th></tr></thead>
+  <tbody>
+    {% for reason, count in reasons %}
+    <tr><td>{{ reason }}</td><td>{{ count }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="muted">成功以外のログはありません。</p>{% endif %}
+
+<h3>企業ステータス(リスト作成の進捗)</h3>
+<div class="stats">
+  {% for s in statuses %}
+    {% if company_status.get(s.value) %}
+      <span class="badge {{ s.value }}">{{ s.value }}: {{ company_status.get(s.value) }}</span>
+    {% endif %}
+  {% endfor %}
+</div>
+
+<h3>キャンペーン別サマリ</h3>
+<table>
+  <thead><tr><th>キャンペーン</th><th>送信数</th><th>成功</th><th>成功率</th><th>手動対応</th><th>失敗</th><th>スキップ</th></tr></thead>
+  <tbody>
+    {% for row in campaign_rows %}
+    <tr>
+      <td><a href="/campaigns/{{ row.campaign.id }}">{{ row.campaign.name }}</a></td>
+      <td>{{ row.total }}</td>
+      <td>{{ row.success }}</td>
+      <td>{{ "%.1f"|format(row.rate) }}%</td>
+      <td>{{ row.manual }}</td>
+      <td>{{ row.failed }}</td>
+      <td>{{ row.skipped }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="muted">キャンペーンがありません。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
