@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}手動対応キュー | フォーム営業ツール{% endblock %}
+{% block content %}
+{% if flash %}<div class="flash">{{ flash }}</div>{% endif %}
+<h2>手動対応キュー</h2>
+<p class="muted">CAPTCHA や完了未確認などで自動送信を止めたタスクです。フォームを開いて人が対応し、結果を記録してください。</p>
+
+<table>
+  <thead><tr><th>ID</th><th>企業</th><th>フォーム</th><th>本文</th><th>理由</th><th>スクリーンショット</th><th>操作</th></tr></thead>
+  <tbody>
+    {% for t in tasks %}
+    <tr>
+      <td>{{ t.id }}</td>
+      <td>{{ t.company.name }}</td>
+      <td><a href="{{ t.contact_form.form_url }}" target="_blank" rel="noopener">開く</a></td>
+      <td><details><summary>本文</summary><pre style="white-space:pre-wrap; max-width:420px;">{{ t.rendered_body }}</pre></details></td>
+      <td class="muted">{{ t.detail or "" }}</td>
+      <td class="muted">{{ t.screenshot_path or "" }}</td>
+      <td>
+        <form method="post" action="/manual/{{ t.id }}/done" style="display:inline">
+          <button type="submit">送信完了にする</button>
+        </form>
+        <form method="post" action="/manual/{{ t.id }}/skip" style="display:inline">
+          <button type="submit" class="danger">スキップ</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="muted">手動対応が必要なタスクはありません。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

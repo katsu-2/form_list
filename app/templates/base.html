@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}フォーム営業ツール{% endblock %}</title>
+  <style>
+    :root { --border: #ddd; --accent: #2563eb; --muted: #6b7280; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif; margin: 0; color: #111; }
+    header { background: #1e293b; color: #fff; padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 2rem; }
+    header h1 { font-size: 1rem; margin: 0; }
+    header nav a { color: #cbd5e1; text-decoration: none; margin-right: 1rem; font-size: 0.9rem; }
+    header nav a:hover { color: #fff; }
+    main { padding: 1.5rem; max-width: 1200px; margin: 0 auto; }
+    .flash { background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 0.5rem 1rem; border-radius: 6px; margin-bottom: 1rem; }
+    table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+    th, td { border: 1px solid var(--border); padding: 0.4rem 0.6rem; text-align: left; }
+    th { background: #f8fafc; }
+    .toolbar { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+    .toolbar form { display: flex; gap: 0.5rem; align-items: center; }
+    input[type=text], select { padding: 0.35rem 0.5rem; border: 1px solid var(--border); border-radius: 4px; }
+    button, .btn { padding: 0.35rem 0.75rem; border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 4px; cursor: pointer; font-size: 0.85rem; text-decoration: none; display: inline-block; }
+    button.secondary, .btn.secondary { background: #fff; color: var(--accent); }
+    button.danger { background: #fff; color: #dc2626; border-color: #dc2626; }
+    .badge { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.75rem; }
+    .badge.new { background: #f1f5f9; color: #475569; }
+    .badge.form_found { background: #eff6ff; color: #1d4ed8; }
+    .badge.form_not_found { background: #fef9c3; color: #854d0e; }
+    .badge.ready { background: #ecfdf5; color: #047857; }
+    .badge.excluded { background: #fee2e2; color: #b91c1c; }
+    .muted { color: var(--muted); }
+    .stats { display: flex; gap: 1rem; margin-bottom: 1rem; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>フォーム営業ツール</h1>
+    <nav>
+      <a href="/">企業リスト</a>
+      <a href="/templates/">テンプレート</a>
+      <a href="/campaigns/">キャンペーン</a>
+      <a href="/manual/">手動対応キュー</a>
+      <a href="/dashboard/">ダッシュボード</a>
+      <a href="/settings/">自社情報</a>
+    </nav>
+  </header>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

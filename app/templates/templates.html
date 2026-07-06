@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}テンプレート | フォーム営業ツール{% endblock %}
+{% block content %}
+{% if flash %}<div class="flash">{{ flash }}</div>{% endif %}
+<div class="toolbar">
+  <a class="btn" href="/templates/new">新規テンプレート</a>
+</div>
+<table>
+  <thead><tr><th>ID</th><th>名前</th><th>件名</th><th>本文(先頭)</th><th></th></tr></thead>
+  <tbody>
+    {% for t in items %}
+    <tr>
+      <td>{{ t.id }}</td>
+      <td>{{ t.name }}</td>
+      <td>{{ t.subject or "" }}</td>
+      <td class="muted">{{ t.body[:60] }}{% if t.body|length > 60 %}…{% endif %}</td>
+      <td><a class="btn secondary" href="/templates/{{ t.id }}">編集</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">テンプレートがありません。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
