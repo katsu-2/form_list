@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}テンプレート編集 | フォーム営業ツール{% endblock %}
+{% block content %}
+<h2>{% if item %}テンプレート編集{% else %}新規テンプレート{% endif %}</h2>
+<p class="muted">本文・件名で使える変数: <code>{{ '{{company_name}}' }}</code>(送信先の企業名)、<code>{{ '{{domain}}' }}</code>、<code>{{ '{{industry}}' }}</code></p>
+<form method="post" action="/templates/save" style="display:grid; gap:0.75rem; max-width:720px;">
+  {% if item %}<input type="hidden" name="template_id" value="{{ item.id }}">{% endif %}
+  <label>名前<br><input type="text" name="name" value="{{ item.name if item else '' }}" required style="width:100%"></label>
+  <label>件名(フォームに件名欄がある場合に使用)<br><input type="text" name="subject" value="{{ item.subject or '' if item else '' }}" style="width:100%"></label>
+  <label>本文<br><textarea name="body" rows="14" required style="width:100%">{{ item.body if item else '' }}</textarea></label>
+  <div><button type="submit">保存</button> <a class="btn secondary" href="/templates/">戻る</a></div>
+</form>
+{% endblock %}

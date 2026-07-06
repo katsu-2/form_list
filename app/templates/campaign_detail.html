@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ campaign.name }} | フォーム営業ツール{% endblock %}
+{% block content %}
+{% if flash %}<div class="flash">{{ flash }}</div>{% endif %}
+
+<h2>{{ campaign.name }} <span class="muted">({{ campaign.status }})</span></h2>
+<p class="muted">テンプレート: {{ campaign.template.name }} / 送信間隔 {{ campaign.interval_seconds }}秒 / 日次上限 {{ campaign.daily_limit }}件 / モード: 半自動(承認済みのみ送信)</p>
+
+{% if profile_warnings %}
+<div class="flash" style="background:#fef9c3; border-color:#eab308; color:#854d0e;">
+  対象フォームが要求する差出人情報が未設定です: {{ profile_warnings|join(", ") }}
+  — <a href="/settings/">自社情報を設定</a>
+</div>
+{% endif %}
+
+<div class="stats">
+  {% for s in statuses %}{% if counts.get(s) %}<span class="badge new">{{ s.value }}: {{ counts.get(s) }}</span>{% endif %}{% endfor %}
+</div>
+
+<div class="toolbar">
+  <form method="post" action="/campaigns/{{ campaign.id }}/approve-all">
+    <button type="submit" class="secondary">下書きを全件承認</button>
+  </form>
+  <form method="post" action="/campaigns/{{ campaign.id }}/run">
+    <input type="hidden" name="dry_run" value="1">
+    <button type="submit" class="secondary">dry-run(入力のみ・送信なし)</button>
+  </form>
+  <form method="post" action="/campaigns/{{ campaign.id }}/run" onsubmit="return confirm('承認済みタスクの送信を開始します。よろしいですか?')">
+    <button type="submit">送信開始</button>
+  </form>
+  <a class="btn secondary" href="/campaigns/{{ campaign.id }}">表示を更新</a>
+</div>
+
+<h3>送信タスク</h3>
+<table>
+  <thead><tr><th>ID</th><th>企業</th><th>フォーム</th><th>本文(下書き)</th><th>状態</th><th>詳細</th><th>操作</th></tr></thead>
+  <tbody>
+    {% for t in tasks %}
+    <tr>
+      <td>{{ t.id }}</td>
+      <td>{{ t.company.name }}</td>
+      <td><a href="{{ t.contact_form.form_url }}" target="_blank" rel="noopener">開く</a>
+        {% if t.contact_form.has_captcha %}<span class="muted">(CAPTCHA)</span>{% endif %}</td>
+      <td><details><summary>{{ t.rendered_body[:40] }}…</summary><pre style="white-space:pre-wrap; max-width:480px;">{{ t.rendered_body }}</pre></details></td>
+      <td><span class="badge {% if t.status.value == 'sent' %}ready{% elif t.status.value in ['failed'] %}excluded{% elif t.status.value == 'manual' %}form_not_found{% else %}new{% endif %}">{{ t.status.value }}</span></td>
+      <td class="muted">{{ t.detail or "" }}</td>
+      <td>
+        {% if t.status.value == 'draft' %}
+        <form method="post" action="/campaigns/{{ campaign.id }}/tasks/{{ t.id }}/approve" style="display:inline"><button type="submit" class="secondary">承認</button></form>
+        {% endif %}
+        {% if t.status.value in ['draft', 'approved'] %}
+        <form method="post" action="/campaigns/{{ campaign.id }}/tasks/{{ t.id }}/reject" style="display:inline"><button type="submit" class="danger">却下</button></form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="muted">タスクがありません。企業リストで status=ready の企業が対象になります。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>送信ログ(直近100件)</h3>
+<table>
+  <thead><tr><th>日時(UTC)</th><th>企業ID</th><th>結果</th><th>詳細</th><th>スクリーンショット</th></tr></thead>
+  <tbody>
+    {% for log in logs %}
+    <tr>
+      <td>{{ log.sent_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+      <td>{{ log.company_id }}</td>
+      <td>{{ log.result.value }}</td>
+      <td class="muted">{{ log.detail or "" }}</td>
+      <td class="muted">{{ log.screenshot_path or "" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">ログがありません。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

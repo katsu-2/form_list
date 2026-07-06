@@ -37,6 +37,16 @@ class SendMode(str, enum.Enum):
     AUTO = "auto"
 
 
+class SendTaskStatus(str, enum.Enum):
+    DRAFT = "draft"            # 下書き生成済み・承認待ち
+    APPROVED = "approved"      # 承認済み・送信待ち
+    SENDING = "sending"
+    SENT = "sent"
+    FAILED = "failed"
+    MANUAL = "manual"          # CAPTCHA等で人の対応待ち
+    SKIPPED = "skipped"
+
+
 class Company(Base):
     __tablename__ = "companies"
     __table_args__ = (UniqueConstraint("domain", name="uq_companies_domain"),)
@@ -112,6 +122,51 @@ class SendLog(Base):
     screenshot_path: Mapped[str | None] = mapped_column(String(1024))
 
     company: Mapped[Company] = relationship()
+
+
+class SenderProfile(Base):
+    """フォームに入力する差出人(自社)情報。1行のみ運用する。"""
+
+    __tablename__ = "sender_profile"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    company_name: Mapped[str] = mapped_column(String(255), default="")
+    person_name: Mapped[str] = mapped_column(String(255), default="")
+    person_name_kana: Mapped[str] = mapped_column(String(255), default="")
+    email: Mapped[str] = mapped_column(String(255), default="")
+    phone: Mapped[str] = mapped_column(String(64), default="")
+    postal_code: Mapped[str] = mapped_column(String(16), default="")
+    address: Mapped[str] = mapped_column(String(512), default="")
+    department: Mapped[str] = mapped_column(String(255), default="")
+    position: Mapped[str] = mapped_column(String(255), default="")
+    site_url: Mapped[str] = mapped_column(String(1024), default="")
+
+
+class SendTask(Base):
+    """キャンペーンから生成される送信タスク(下書き→承認→送信)。"""
+
+    __tablename__ = "send_tasks"
+    __table_args__ = (
+        UniqueConstraint("campaign_id", "company_id", name="uq_send_tasks_campaign_company"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    campaign_id: Mapped[int] = mapped_column(ForeignKey("campaigns.id"), index=True)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"), index=True)
+    contact_form_id: Mapped[int] = mapped_column(ForeignKey("contact_forms.id"))
+    rendered_subject: Mapped[str | None] = mapped_column(String(512))
+    rendered_body: Mapped[str] = mapped_column(Text)
+    status: Mapped[SendTaskStatus] = mapped_column(
+        Enum(SendTaskStatus), default=SendTaskStatus.DRAFT, index=True
+    )
+    detail: Mapped[str | None] = mapped_column(Text)  # 失敗理由・手動対応理由
+    screenshot_path: Mapped[str | None] = mapped_column(String(1024))
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    campaign: Mapped[Campaign] = relationship()
+    company: Mapped[Company] = relationship()
+    contact_form: Mapped[ContactForm] = relationship()
 
 
 class NgEntry(Base):

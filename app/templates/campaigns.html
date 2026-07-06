@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}キャンペーン | フォーム営業ツール{% endblock %}
+{% block content %}
+{% if flash %}<div class="flash">{{ flash }}</div>{% endif %}
+
+<h2>キャンペーン作成</h2>
+{% if template_items %}
+<form method="post" action="/campaigns/create" class="toolbar">
+  <input type="text" name="name" placeholder="キャンペーン名" required>
+  <select name="template_id" required>
+    {% for t in template_items %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
+  </select>
+  <label>送信間隔(秒)<input type="number" name="interval_seconds" value="30" min="10" style="width:5rem"></label>
+  <label>日次上限<input type="number" name="daily_limit" value="100" min="1" style="width:5rem"></label>
+  <button type="submit">作成(ready企業の下書きを生成)</button>
+</form>
+{% else %}
+<p class="muted">先に<a href="/templates/new">テンプレートを作成</a>してください。</p>
+{% endif %}
+
+<h2>キャンペーン一覧</h2>
+<table>
+  <thead><tr><th>ID</th><th>名前</th><th>テンプレート</th><th>状態</th><th>間隔</th><th>日次上限</th><th></th></tr></thead>
+  <tbody>
+    {% for c in items %}
+    <tr>
+      <td>{{ c.id }}</td>
+      <td>{{ c.name }}</td>
+      <td>{{ c.template.name }}</td>
+      <td>{{ c.status }}</td>
+      <td>{{ c.interval_seconds }}秒</td>
+      <td>{{ c.daily_limit }}</td>
+      <td><a class="btn secondary" href="/campaigns/{{ c.id }}">詳細</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="muted">キャンペーンがありません。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

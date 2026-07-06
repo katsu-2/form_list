@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}自社情報 | フォーム営業ツール{% endblock %}
+{% block content %}
+{% if flash %}<div class="flash">{{ flash }}</div>{% endif %}
+<h2>自社情報(フォームに入力する差出人情報)</h2>
+<form method="post" action="/settings/save" style="display:grid; gap:0.75rem; max-width:560px;">
+  {% for field, label in fields %}
+  <label>{{ label }}<br>
+    <input type="text" name="{{ field }}" value="{{ profile|attr(field) }}" style="width:100%">
+  </label>
+  {% endfor %}
+  <div><button type="submit">保存</button></div>
+</form>
+{% endblock %}
